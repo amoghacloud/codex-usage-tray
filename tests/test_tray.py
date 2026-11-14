@@ -12,8 +12,29 @@ class UsageTests(unittest.TestCase):
     def test_remaining_and_expired_reset(self):
         self.assertIn('30% left', tray.window_text({'usedPercent': 70, 'windowDurationMins': 300, 'resetsAt': 2000}, 1000))
         text = tray.window_text({'usedPercent': 100, 'windowDurationMins': 10080, 'resetsAt': 500}, 1000)
-        self.assertIn('0% left', text)
-        self.assertIn('refresh needed', text)
+        self.assertNotIn('0% left', text)
+        self.assertIn('sign in and refresh', text)
+
+    def test_expired_blocked_reading_becomes_unknown(self):
+        account = tray.demo_data(1000)['accounts']['demo-1']
+        self.assertIn('blocked', tray.account_status(account, 1000))
+        self.assertIn('Likely available', tray.account_status(account, 4000))
+        self.assertNotIn('blocked', tray.account_status(account, 4000))
+        self.assertNotIn('0% left', tray.account_summary(account, 4000))
+        self.assertIn('0% left', tray.account_summary(account, 1000))
+        self.assertFalse(account['allowed'])
+
+    def test_five_hour_reset_does_not_clear_weekly_limit(self):
+        account = tray.demo_data(1000)['accounts']['demo-1']
+        account['limits']['codex']['secondary']['usedPercent'] = 100
+        self.assertFalse(tray.likely_available_after_reset(account, 4000))
+        self.assertNotIn('Likely available', tray.account_summary(account, 4000))
+        self.assertTrue(tray.likely_available_after_reset(account, 200000))
+
+    def test_reset_does_not_clear_spend_controls(self):
+        account = tray.demo_data(1000)['accounts']['demo-1']
+        account['limits']['codex']['spendControlReached'] = True
+        self.assertFalse(tray.likely_available_after_reset(account, 4000))
 
     def test_account_change_is_not_saved_to_wrong_identity(self):
         a = {'account': {'type': 'chatgpt', 'email': 'one@example.com'}, 'userId': 'one'}

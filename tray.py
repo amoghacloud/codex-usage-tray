@@ -13,7 +13,7 @@ import subprocess
 import threading
 import time
 
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 ROOT = Path(__file__).resolve().parent
 STATE = Path(os.environ.get('XDG_STATE_HOME', str(Path.home() / '.local/state'))) / 'codex-usage-tray'
 
@@ -137,10 +137,69 @@ def window_text(window, now):
     label = 'Weekly' if mins == 10080 else '5-hour' if mins == 300 else (f'{mins // 60:g}-hour' if mins and mins % 60 == 0 else f'{mins}m' if mins else 'Usage')
     remaining = max(0, min(100, 100 - float(window.get('usedPercent', 100))))
     reset = window.get('resetsAt')
+    if reset is not None and reset <= now:
+        return f'{label}: reset time passed · sign in and refresh to check usage'
     suffix = ''
     if reset:
         suffix = f' · resets in {duration(reset - now)}' if reset > now else ' · reset time passed; refresh needed'
     return f'{label}: {remaining:g}% left{suffix}'
+
+
+def needs_recheck(account, now):
+    for limit in account.get('limits', {}).values():
+        for field in ('primary', 'secondary'):
+            reset = (limit.get(field) or {}).get('resetsAt')
+            if reset is not None and reset <= now:
+                return True
+    return False
+
+
+def likely_available_after_reset(account, now):
+    expired_exhausted_window = False
+    for limit in account.get('limits', {}).values():
+        if limit.get('spendControlReached') is True:
+            return False
+        for field in ('primary', 'secondary'):
+            window = limit.get(field)
+            if not window:
+                continue
+            reset = window.get('resetsAt')
+            exhausted = float(window.get('usedPercent', 100)) >= 100
+            expired = reset is not None and reset <= now
+            if exhausted and not expired:
+                return False
+            if exhausted and expired:
+                expired_exhausted_window = True
+    return expired_exhausted_window
+
+
+def account_status(account, now):
+    if likely_available_after_reset(account, now):
+        return 'Likely available after reset · refresh to confirm'
+    if needs_recheck(account, now):
+        return 'Reset time passed · usage needs a fresh check'
+    if account.get('allowed') is False:
+        return 'Included usage blocked at last check'
+    if account.get('allowed') is True:
+        return 'Included usage available at last check'
+    return 'Included usage status unavailable'
+
+
+def account_summary(account, now):
+    if likely_available_after_reset(account, now):
+        return 'Likely available · exhausted window reset · unverified'
+    if needs_recheck(account, now):
+        return 'Reset time passed · sign in and refresh'
+    limit = account.get('limits', {}).get('codex') or next(iter(account.get('limits', {}).values()), {})
+    parts = []
+    for field, fallback in [('primary', 'Primary'), ('secondary', 'Secondary')]:
+        window = limit.get(field)
+        if window:
+            mins = window.get('windowDurationMins')
+            label = '5h' if mins == 300 else 'Week' if mins == 10080 else fallback
+            left = max(0, min(100, 100 - float(window.get('usedPercent', 100))))
+            parts.append(f'{label} {left:g}% left')
+    return ' · '.join(parts) or 'Usage unavailable'
 
 
 def demo_data(now=None):
@@ -189,8 +248,6 @@ class App:
         item = self.Gtk.MenuItem.new_with_label(label)
         if callback:
             item.connect('activate', lambda *_: callback())
-        else:
-            item.set_sensitive(False)
         menu.append(item)
         return item
 
@@ -203,30 +260,33 @@ class App:
         now = time.time()
         accounts = self.data['accounts']
         self.item(menu, f'Codex Usage · {len(accounts)} accounts saved')
-        self.item(menu, 'DEMO · all accounts and readings are fictional' if self.demo else 'Updates the signed-in account every minute')
+        self.item(menu, 'DEMO · fictional readings' if self.demo else 'Current account updates every minute')
         menu.append(self.Gtk.SeparatorMenuItem())
         if not accounts:
             self.item(menu, 'Waiting for your first account…')
-        for key, account in sorted(accounts.items(), key=lambda pair: (pair[0] != self.active, pair[1]['email'])):
+        for key, account in sorted(accounts.items(), key=lambda pair: (
+                pair[0] != self.active,
+                not likely_available_after_reset(pair[1], now),
+                pair[1]['email'])):
             current = key == self.active
             age = max(0, now - account['checked_at'])
             title = account['email'] + (' · current' if current else ' · saved')
             if account.get('workspace'):
                 title += ' · ' + account['workspace']
-            self.item(menu, title)
-            self.item(menu, f"  {account.get('plan') or 'Plan unknown'} · checked {duration(age)} ago")
-            if account.get('allowed') is False:
-                self.item(menu, '  Included usage blocked at last check')
-            elif account.get('allowed') is True:
-                self.item(menu, '  Included usage available at last check')
+            row = self.item(menu, title)
+            details = self.Gtk.Menu()
+            row.set_submenu(details)
+            self.item(menu, account_summary(account, now))
+            self.item(details, f"{account.get('plan') or 'Plan unknown'} · checked {duration(age)} ago")
+            self.item(details, account_status(account, now))
             for name, limit in account.get('limits', {}).items():
                 if len(account['limits']) > 1:
-                    self.item(menu, '  ' + (limit.get('limitName') or name))
+                    self.item(details, limit.get('limitName') or name)
                 for field in ['primary', 'secondary']:
                     if limit.get(field):
-                        self.item(menu, '  ' + window_text(limit[field], now))
+                        self.item(details, window_text(limit[field], now))
                 if not limit.get('primary') and not limit.get('secondary'):
-                    self.item(menu, '  Usage percentages unavailable')
+                    self.item(details, 'Usage percentages unavailable')
             menu.append(self.Gtk.SeparatorMenuItem())
         if self.error:
             self.item(menu, self.error)
@@ -243,7 +303,9 @@ class App:
         current = accounts.get(self.active)
         label = 'Codex'
         if current:
-            if current.get('allowed') is False:
+            if needs_recheck(current, now):
+                label = 'Codex · recheck'
+            elif current.get('allowed') is False:
                 label = 'Codex · blocked'
             else:
                 limit = current.get('limits', {}).get('codex') or next(iter(current.get('limits', {}).values()), {})

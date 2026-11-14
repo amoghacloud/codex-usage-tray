@@ -32,7 +32,7 @@
           "primary": {
             "usedPercent": 100,
             "windowDurationMins": 300,
-            "resetsAt": 1800002400
+            "resetsAt": 1799999400
           },
           "secondary": {
             "usedPercent": 60,

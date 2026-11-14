@@ -1,36 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="920" height="960" viewBox="0 0 920 960">
-<rect width="920" height="960" rx="18" fill="#111827"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="780" viewBox="0 0 960 780">
+<rect width="960" height="780" rx="18" fill="#111827"/>
 <g font-family="DejaVu Sans, sans-serif">
-<text x="48" y="57" font-size="28" font-weight="bold" fill="#ffffff">Codex Usage Tray</text>
-<text x="48" y="91" font-size="16" fill="#cbd5e1">Your accounts, remembered in the Ubuntu top panel.</text>
-<rect x="48" y="122" width="824" height="45" rx="8" fill="#030712"/>
-<text x="68" y="150" font-size="15" fill="#e5e7eb">Ubuntu</text>
-<text x="642" y="150" font-size="15" fill="#ffffff">Codex 65% · demo</text>
-<rect x="150" y="190" width="722" height="670" rx="12" fill="#1f2937" stroke="#4b5563"/>
-<text x="178" y="227" font-size="19" font-weight="bold" fill="#ffffff">Codex Usage · 4 accounts saved</text>
-<text x="178" y="256" font-size="14" fill="#fcd34d">DEMO · all accounts and readings are fictional</text>
-<path d="M178 276H844" stroke="#4b5563"/>
-<text x="178" y="303" font-size="17" font-weight="bold" fill="#f9fafb">personal@example.com · current</text>
-<text x="178" y="328" font-size="14" fill="#cbd5e1">plus · checked just now</text>
-<text x="178" y="354" font-size="15" fill="#e5e7eb">5-hour: 65% left · resets in 2h 0m</text>
-<text x="178" y="378" font-size="15" fill="#e5e7eb">Weekly: 82% left · resets in 2d 0h</text>
-<path d="M178 396H844" stroke="#4b5563"/>
-<text x="178" y="423" font-size="17" font-weight="bold" fill="#f9fafb">work@example.com · saved</text>
-<text x="178" y="448" font-size="14" fill="#cbd5e1">plus · checked 20m ago</text>
-<text x="178" y="474" font-size="15" fill="#e5e7eb">5-hour: 0% left · resets in 40m</text>
-<text x="178" y="498" font-size="15" fill="#e5e7eb">Weekly: 40% left · resets in 2d 0h</text>
-<path d="M178 516H844" stroke="#4b5563"/>
-<text x="178" y="543" font-size="17" font-weight="bold" fill="#f9fafb">projects@example.com · saved</text>
-<text x="178" y="568" font-size="14" fill="#cbd5e1">plus · checked 2h 0m ago</text>
-<text x="178" y="594" font-size="15" fill="#e5e7eb">5-hour: 90% left · resets in 2h 0m</text>
-<text x="178" y="618" font-size="15" fill="#e5e7eb">Weekly: 71% left · resets in 2d 0h</text>
-<path d="M178 636H844" stroke="#4b5563"/>
-<text x="178" y="663" font-size="17" font-weight="bold" fill="#f9fafb">weekend@example.com · saved</text>
-<text x="178" y="688" font-size="14" fill="#cbd5e1">plus · checked 1d 0h ago</text>
-<text x="178" y="714" font-size="15" fill="#e5e7eb">5-hour: 35% left · resets in 2h 0m</text>
-<text x="178" y="738" font-size="15" fill="#e5e7eb">Weekly: 18% left · resets in 2d 0h</text>
-<path d="M178 770H844" stroke="#4b5563"/>
-<text x="178" y="802" font-size="16" fill="#ffffff">Refresh now</text>
-<text x="178" y="836" font-size="16" fill="#ffffff">Quit</text>
-<text x="48" y="908" font-size="15" fill="#cbd5e1">Illustration · fake examples only · actual menu follows your desktop theme</text>
+<text x="40" y="50" font-size="28" fill="#f9fafb">Codex Usage Tray</text>
+<text x="40" y="86" font-size="17" fill="#cbd5e1">Remember your accounts. See which one to try next.</text>
+<rect x="40" y="116" width="880" height="44" rx="8" fill="#030712"/>
+<text x="650" y="144" font-size="16" fill="#f9fafb">Codex 65% · demo</text>
+<rect x="100" y="182" width="820" height="508" rx="12" fill="#1f2937" stroke="#4b5563"/>
+<text x="124" y="218" font-size="20" fill="#f9fafb">Codex Usage · 4 accounts saved</text>
+<text x="124" y="249" font-size="15" fill="#fcd34d">DEMO · fictional readings</text>
+<text x="124" y="290" font-size="18" fill="#f9fafb">personal@example.com · current    ›</text>
+<text x="124" y="319" font-size="15" fill="#e5e7eb">5h 65% left · Week 82% left</text>
+<text x="124" y="366" font-size="18" fill="#f9fafb">work@example.com · saved    ›</text>
+<text x="124" y="395" font-size="15" fill="#a7f3d0">Likely available · exhausted window reset · unverified</text>
+<text x="124" y="442" font-size="18" fill="#f9fafb">projects@example.com · saved    ›</text>
+<text x="124" y="471" font-size="15" fill="#e5e7eb">5h 90% left · Week 71% left</text>
+<text x="124" y="518" font-size="18" fill="#f9fafb">weekend@example.com · saved    ›</text>
+<text x="124" y="547" font-size="15" fill="#e5e7eb">5h 35% left · Week 18% left</text>
+<text x="124" y="610" font-size="16" fill="#f9fafb">Refresh now</text>
+<text x="124" y="650" font-size="16" fill="#f9fafb">Quit</text>
+<text x="40" y="733" font-size="15" fill="#cbd5e1">Illustration · fictional accounts · account submenus contain reset details</text>
 </g></svg>

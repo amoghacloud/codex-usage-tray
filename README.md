@@ -12,12 +12,13 @@ Free, open-source, and local. Built after repeatedly switching accounts and forg
 
 - Shows remaining five-hour and weekly usage when those windows are provided by Codex.
 - Remembers accounts and workspaces as you sign into them.
+- Keeps the menu compact with a summary for each account. Open an account submenu for reset times and the last check time.
 - Refreshes the signed-in account every minute, with a manual **Refresh now** action.
 - Shows when each account was last checked, plus reset countdowns.
 - Runs in the system tray; no browser dashboard or extra account registration.
 - Uses your existing Codex sign-in through its local app-server interface.
 
-**Only the signed-in account refreshes. Other accounts show their last saved reading.** Sign into an account and refresh to verify its current allowance. A passed reset time is not treated as confirmed availability. This app does not switch accounts or increase usage limits.
+**Only the signed-in account refreshes. Other accounts show their last saved reading.** Sign into an account and refresh to verify its current allowance. After an exhausted usage window passes its reset time, the account is highlighted as **likely available** if its other saved windows have capacity. This is an estimate until that account is signed in and refreshed. A weekly limit that is still exhausted prevents the estimate. Other expired readings request a fresh check. This app does not switch accounts or increase usage limits.
 
 ## Compatibility
 

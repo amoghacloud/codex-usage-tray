@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.1 — 2026-11-14
+
+- Highlight accounts likely to have capacity after an exhausted window resets, respecting saved weekly limits and spend-control blocks.
+- Replace expired percentages and blocked/available status with estimated availability or a fresh-check message.
+- Use readable menu text rather than disabled styling for usage details.
+- Move account details into submenus so Refresh and Quit remain easy to reach.
+- Remove the four-account counter limit from the original installed build.
+
 ## 0.1.0 — 2026-11-14
 
 Initial public beta.
