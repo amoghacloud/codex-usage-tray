@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+*.log
+accounts.json
+accounts.tmp
+*.lock
+dist/
+.env
+.env.*
+auth.json
