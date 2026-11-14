@@ -1,14 +1,5 @@
-name: Desktop preview
-on:
-  push:
-    branches: [main]
-  pull_request:
-  workflow_dispatch:
-    inputs:
-      publish:
-        description: Publish the v0.2.0 preview on GitHub Releases
-        type: boolean
-        default: false
+name: Community desktop builds
+on: workflow_dispatch
 permissions:
   contents: read
 jobs:
@@ -51,25 +42,3 @@ jobs:
           name: codex-usage-tray-${{ matrix.name }}
           path: codex-usage-tray-${{ matrix.name }}.zip
           if-no-files-found: error
-  release:
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.publish)
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: codex-usage-tray-*
-          merge-multiple: true
-      - name: Publish or refresh preview downloads
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          TARGET: ${{ github.sha }}
-        run: |
-          if gh release view v0.2.0 >/dev/null 2>&1; then
-            echo "v0.2.0 already exists. Use a new version for subsequent builds."
-          else
-            gh release create v0.2.0 codex-usage-tray-*.zip --target "$TARGET" --prerelease --title 'v0.2.0 desktop preview' --notes 'First macOS Apple Silicon and Windows x64 tray builds. Automated checks cover the demo menu and packaging. Live account switching and native tray behavior need community testing. Install and sign in to Codex CLI before launching. The archives are not notarized or Windows publisher-signed.'
-          fi
