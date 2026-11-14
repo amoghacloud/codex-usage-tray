@@ -3,30 +3,59 @@
 import argparse
 import ctypes
 import ctypes.util
-import fcntl
 import json
 import os
 from pathlib import Path
-import selectors
+import queue
+import sys
 import shutil
 import subprocess
 import threading
 import time
 
-VERSION = '0.1.1'
+VERSION = '0.2.0'
 ROOT = Path(__file__).resolve().parent
 STATE = Path(os.environ.get('XDG_STATE_HOME', str(Path.home() / '.local/state'))) / 'codex-usage-tray'
 
 
+if sys.platform == 'win32':
+    STATE = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData/Local')) / 'codex-usage-tray'
+elif sys.platform == 'darwin':
+    STATE = Path.home() / 'Library/Application Support/codex-usage-tray'
+
+
+def codex_binary():
+    found = shutil.which('codex.exe' if sys.platform == 'win32' else 'codex')
+    if found:
+        return found
+    if sys.platform == 'win32':
+        candidates = [Path.home() / '.local/bin/codex.exe']
+        npm = Path(os.environ.get('APPDATA', Path.home() / 'AppData/Roaming')) / 'npm'
+        for prefix in [Path(found).parent for found in [shutil.which('codex.cmd')] if found] + [npm]:
+            codex_package = prefix / 'node_modules/@openai/codex'
+            candidates.extend(sorted(codex_package.glob('node_modules/@openai/codex-win32-*/vendor/*/codex/codex.exe')))
+            candidates.extend(sorted(codex_package.glob('vendor/*/codex/codex.exe')))
+    else:
+        candidates = [Path.home() / '.local/bin/codex']
+        if sys.platform == 'darwin':
+            candidates += [Path('/opt/homebrew/bin/codex'), Path('/usr/local/bin/codex')]
+    for candidate in candidates:
+        if candidate.is_file():
+            return str(candidate)
+    raise RuntimeError('Codex CLI not found · install Codex and sign in')
+
+
 class Rpc:
     def __init__(self):
-        binary = shutil.which('codex') or str(Path.home() / '.local/bin/codex')
-        self.p = subprocess.Popen([binary, 'app-server', '--listen', 'stdio://'],
+        options = {}
+        if sys.platform == 'win32':
+            options['creationflags'] = subprocess.CREATE_NO_WINDOW
+        self.p = subprocess.Popen([codex_binary(), 'app-server', '--listen', 'stdio://'],
                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                  stderr=subprocess.DEVNULL, bufsize=0)
-        self.selector = selectors.DefaultSelector()
-        self.selector.register(self.p.stdout, selectors.EVENT_READ)
-        self.buffer = b''
+                                  stderr=subprocess.DEVNULL, **options)
+        self.lines = queue.Queue()
+        self.reader = threading.Thread(target=self.read_lines, daemon=True)
+        self.reader.start()
         self.serial = 0
         try:
             self.call('initialize', {'clientInfo': {'name': 'codex_usage_tray', 'title': 'Codex Usage Tray', 'version': VERSION}, 'capabilities': None})
@@ -34,6 +63,13 @@ class Rpc:
         except Exception:
             self.close()
             raise
+
+    def read_lines(self):
+        try:
+            for line in self.p.stdout:
+                self.lines.put(line)
+        finally:
+            self.lines.put(None)
 
     def send(self, obj):
         self.p.stdin.write((json.dumps(obj) + '\n').encode())
@@ -45,15 +81,12 @@ class Rpc:
         self.send({'id': ident, 'method': method, 'params': params})
         deadline = time.monotonic() + 15
         while time.monotonic() < deadline:
-            if b'\n' not in self.buffer:
-                if not self.selector.select(max(0, deadline - time.monotonic())):
-                    break
-                chunk = os.read(self.p.stdout.fileno(), 65536)
-                if not chunk:
-                    raise RuntimeError('Codex connection closed')
-                self.buffer += chunk
-                continue
-            line, self.buffer = self.buffer.split(b'\n', 1)
+            try:
+                line = self.lines.get(timeout=max(0, deadline - time.monotonic()))
+            except queue.Empty:
+                break
+            if line is None:
+                raise RuntimeError('Codex connection closed')
             obj = json.loads(line)
             if obj.get('id') != ident:
                 continue
@@ -64,7 +97,6 @@ class Rpc:
         raise RuntimeError('Codex usage check timed out')
 
     def close(self):
-        self.selector.close()
         if self.p.poll() is None:
             self.p.terminate()
             try:
@@ -72,6 +104,9 @@ class Rpc:
             except subprocess.TimeoutExpired:
                 self.p.kill()
                 self.p.wait()
+        self.reader.join(timeout=3)
+        self.p.stdin.close()
+        self.p.stdout.close()
 
 
 def snapshot():
@@ -373,11 +408,19 @@ def main():
     args = parser.parse_args()
     if args.check:
         if args.demo:
-            print(json.dumps(demo_data(), indent=2))
+            if sys.stdout is not None:
+                print(json.dumps(demo_data(), indent=2))
             return
         key, account = snapshot()
         print(json.dumps({'connected': True, 'plan': account['plan'], 'usage_windows': sum(bool(v.get(k)) for v in account['limits'].values() for k in ['primary', 'secondary'])}))
         return
+    if sys.platform in ('darwin', 'win32'):
+        from desktop import run
+        run(args.demo)
+        return
+
+    import fcntl
+
     lock_dir = Path(os.environ.get('XDG_RUNTIME_DIR', '/tmp')) / f'codex-usage-tray-{os.getuid()}' if args.demo else STATE
     lock_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
     with (lock_dir / ('demo.lock' if args.demo else 'tray.lock')).open('w') as lock:

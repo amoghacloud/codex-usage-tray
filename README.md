@@ -22,11 +22,28 @@ Free, open-source, and local. Built after repeatedly switching accounts and forg
 
 ## Compatibility
 
-Beta, tested on Ubuntu 24.04 with GNOME's AppIndicator extension and Codex CLI/app-server 0.169.0. Other Linux desktops and Codex versions are not yet verified. macOS and Windows are not supported.
+Beta, tested on Ubuntu 24.04 with GNOME's AppIndicator extension and Codex CLI/app-server 0.169.0. Other Linux desktops and Codex versions are not yet verified. macOS Apple Silicon and Windows x64 are available as previews.
 
 The tray needs the **Codex CLI** available as `codex` on your PATH or at `~/.local/bin/codex`, with a ChatGPT account signed in. Install the CLI using the [official Codex instructions](https://developers.openai.com/codex/cli/). Desktop-only installations may need the CLI installed separately. If the CLI and desktop app use different account profiles or `CODEX_HOME` directories, the tray follows the CLI's account.
 
-## Install
+## macOS and Windows preview
+
+Download the archive for your system from [GitHub Releases](https://github.com/amoghacloud/codex-usage-tray/releases/tag/v0.2.0). Install the official Codex CLI and sign into ChatGPT on the host OS first. On Windows, the preview uses the Windows CLI and its sign-in.
+
+- **macOS Apple Silicon:** extract the archive and open **Codex Usage Tray.app**. Look for the icon in the menu bar.
+- **Windows x64:** extract the entire archive and open **Codex Usage Tray.exe** from the extracted folder. Look in the taskbar notification area, including the overflow menu.
+
+The preview builds are not notarized on macOS or publisher-signed on Windows. You can run from source with Python and PySide6 if your system blocks unsigned downloads:
+
+```bash
+python -m pip install PySide6==6.8.3
+python desktop.py --demo
+python desktop.py
+```
+
+GitHub Actions checks the offline demo and builds the downloads on each platform. Native tray interactions and live account switching still need testing by Mac and Windows users. See [CONTRIBUTING.md](CONTRIBUTING.md) for bug reports and pull requests.
+
+## Install on Ubuntu
 
 Download and extract the source ZIP from this GitHub repository, then open a terminal inside the extracted folder.
 
@@ -79,7 +96,7 @@ For fictional JSON examples without a graphical session:
 
 The tracker does not directly read, copy, or store your authentication tokens or passwords. It asks a separate, short-lived `codex app-server` process for account and usage information. Codex itself uses its normal authenticated connection to OpenAI, and manages its own credentials.
 
-The tray saves emails, workspace names, account identifiers, plans, usage readings, and check times locally in `~/.local/state/codex-usage-tray/accounts.json` (or under `$XDG_STATE_HOME`). Files are written with owner-only permissions. There is no tracker backend, analytics, or telemetry in this project. Codex's own settings still apply to Codex processes.
+The tray saves emails, workspace names, account identifiers, plans, usage readings, and check times locally in `~/.local/state/codex-usage-tray/accounts.json` (or under `$XDG_STATE_HOME`). On Linux and macOS, history files use owner-only permissions. On Windows, history is kept under your user profile’s Local AppData. On macOS it is kept under your user Library’s Application Support. There is no tracker backend, analytics, or telemetry in this project. Codex's own settings still apply to Codex processes.
 
 Real account emails are visible in the live menu. Use demo mode for public screenshots. **Forget saved accounts** clears the history; the current account returns on the next refresh.
 

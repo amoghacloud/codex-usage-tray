@@ -1,6 +1,7 @@
 import importlib.util
 from pathlib import Path
 import tempfile
+import os
 import unittest
 from unittest import mock
 
@@ -69,7 +70,8 @@ class UsageTests(unittest.TestCase):
             data = tray.demo_data(100000)
             tray.save(data)
             self.assertEqual(tray.load(), data)
-            self.assertEqual((Path(directory) / 'accounts.json').stat().st_mode & 0o777, 0o600)
+            if os.name != 'nt':
+                self.assertEqual((Path(directory) / 'accounts.json').stat().st_mode & 0o777, 0o600)
 
 if __name__ == '__main__':
     unittest.main()

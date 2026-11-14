@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0
+
+- Add preview tray builds for macOS Apple Silicon and Windows x64.
+- Run desktop smoke tests and package downloads on GitHub Actions.
+
 ## 0.1.1 — 2026-11-14
 
 - Highlight accounts likely to have capacity after an exhausted window resets, respecting saved weekly limits and spend-control blocks.
